@@ -24,6 +24,7 @@ public class ConsumerRecordResponseHandler extends AbstractHandler {
             logger.debug("handle", serverResponse);
         }
         ConsumerRecords consumerRecords = (ConsumerRecords) serverResponse;
+        threadParkCoordinator.unpark(consumerRecords);
     }
 
 }

@@ -1,5 +1,6 @@
 package org.kk.cheetah.client.assist;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 import org.kk.cheetah.common.model.response.ConsumerRecords;
@@ -20,8 +21,26 @@ public class ConsumerThreadParkCoordinator extends AbstractThreadParkCoordinator
 
     @Override
     protected void buildReturnData(ThreadPark threadPark, ServerResponse serverResponse) {
+    	if(logger.isDebugEnabled()){
+    		logger.debug("buildReturnData -> onlyTag:{}",serverResponse.getOnlyTag());
+    	}
         ConsumerRecords blockerConsumerRecords = (ConsumerRecords) LockSupport.getBlocker(threadPark.getThread());
+        if(blockerConsumerRecords == null){
+        	//等待Thread park
+        	try {
+				TimeUnit.MICROSECONDS.sleep(1);
+			} catch (InterruptedException e) {
+		    	if(logger.isDebugEnabled()){
+		    		logger.debug("buildReturnData",e);
+		    	}
+			}
+        	buildReturnData(threadPark,serverResponse);
+        	return;
+        }
         ConsumerRecords consumerRecords = (ConsumerRecords) serverResponse;
-        blockerConsumerRecords.setConsumberRecords(consumerRecords.getConsumberRecords());
+    	if(logger.isDebugEnabled()){
+    		logger.debug("buildReturnData ->consumerRecords:{}",consumerRecords);
+    	}
+    	blockerConsumerRecords.setConsumberRecords(consumerRecords.getConsumberRecords());
     }
 }

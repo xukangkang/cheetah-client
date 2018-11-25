@@ -26,4 +26,29 @@ public class ThreadPark {
         return "ThreadPark [thread=" + thread + ", onlyTag=" + onlyTag + "]";
     }
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((onlyTag == null) ? 0 : onlyTag.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ThreadPark other = (ThreadPark) obj;
+		if (onlyTag == null) {
+			if (other.onlyTag != null)
+				return false;
+		} else if (!onlyTag.equals(other.onlyTag))
+			return false;
+		return true;
+	}
+
 }

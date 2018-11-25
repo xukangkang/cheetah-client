@@ -48,7 +48,9 @@ public class CheetahConsumerClient extends CheetahAbstractClient {
         consumerRecordRequest.setGroup(group);
         consumerRecordRequest.setMaxPollNum(maxPollNum);
         consumerRecordRequest.setPollTag(getClientId() + pollTag.getAndIncrement());
-
+        if(logger.isDebugEnabled()){
+    		logger.debug("poll ->发送第 {} 条消息",pollTag.get());
+    	}
         return executor.submit(new Callable<ConsumerRecords>() {
             public ConsumerRecords call() throws Exception {
                 ((NettyConsumerClientHandler) nettyClientHandler).poll(consumerRecordRequest);

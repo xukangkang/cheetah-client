@@ -34,6 +34,9 @@ public abstract class AbstractThreadParkCoordinator implements ThreadParkCoordin
 
         while (iterator.hasNext()) {
             ThreadPark threadPark = iterator.next();
+            if (logger.isDebugEnabled()) {
+                logger.debug("unpark -> try unpark , onlyTag:{}", serverResponse.getOnlyTag());
+            }
             if (threadPark.getOnlyTag().equals(serverResponse.getOnlyTag())) {
                 buildReturnData(threadPark, serverResponse);
                 LockSupport.unpark(threadPark.getThread());
@@ -45,13 +48,13 @@ public abstract class AbstractThreadParkCoordinator implements ThreadParkCoordin
             }
         }
         try {
+            if (logger.isDebugEnabled()) {
+                logger.debug("unpark -> unpark fail,try unpark again, onlyTag:{}", serverResponse.getOnlyTag());
+            }
             TimeUnit.MICROSECONDS.sleep(1);
             unpark(serverResponse);
         } catch (InterruptedException e) {
             logger.error("unpark", e);
-        }
-        if (logger.isDebugEnabled()) {
-            logger.debug("unpark -> unpark fail , onlyTag:{}", serverResponse.getOnlyTag());
         }
     }
 
