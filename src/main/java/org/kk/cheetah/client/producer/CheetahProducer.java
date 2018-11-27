@@ -26,9 +26,13 @@ public class CheetahProducer<K, V> implements Producer<K, V> {
         if (topic == null) {
             throw new NullPointerException("topic 不能为 null");
         }
+        String server = properties.getProperty("server");
+        if (server == null) {
+            throw new NullPointerException("server 不能为 null");
+        }
         cheetahClient = CheetahProducerClient
                 .cheetahProducerClientBuilder()
-                .cluster("127.0.0.1:9997")
+                .cluster(server)
                 .clientId(clientId)
                 .coreThreadNum(5)
                 .maxThreadNum(5)

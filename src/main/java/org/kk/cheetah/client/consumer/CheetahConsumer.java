@@ -28,9 +28,13 @@ public class CheetahConsumer<K, V> implements Consumer<K, V> {
         if (topic == null) {
             throw new NullPointerException("topic 不能为 null");
         }
+        String server = properties.getProperty("server");
+        if (server == null) {
+            throw new NullPointerException("server 不能为 null");
+        }
         cheetahConsumerClient = CheetahConsumerClient
                 .cheetahConsumerClientBuilder()
-                .cluster("127.0.0.1:9997")
+                .cluster(server)
                 .clientId(clientId)
                 .group(group)
                 .coreThreadNum(5)
