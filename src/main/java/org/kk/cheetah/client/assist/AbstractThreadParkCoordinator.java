@@ -38,7 +38,11 @@ public abstract class AbstractThreadParkCoordinator implements ThreadParkCoordin
                 logger.debug("unpark -> try unpark , onlyTag:{}", serverResponse.getOnlyTag());
             }
             if (threadPark.getOnlyTag().equals(serverResponse.getOnlyTag())) {
-                buildReturnData(threadPark, serverResponse);
+                if (serverResponse.getErrorMsg() != null) {
+                    buildErrorData(threadPark, serverResponse);
+                } else {
+                    buildReturnData(threadPark, serverResponse);
+                }
                 LockSupport.unpark(threadPark.getThread());
                 threadParkList.remove(threadPark);
                 if (logger.isDebugEnabled()) {
@@ -56,6 +60,24 @@ public abstract class AbstractThreadParkCoordinator implements ThreadParkCoordin
         } catch (InterruptedException e) {
             logger.error("unpark", e);
         }
+    }
+
+    private void buildErrorData(ThreadPark threadPark, ServerResponse serverResponse) {
+        Thread thread = threadPark.getThread();
+        ServerResponse blockerServerResponse = (ServerResponse) LockSupport.getBlocker(thread);
+        if (blockerServerResponse == null) {
+            //等待Thread park
+            try {
+                TimeUnit.MICROSECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("buildReturnData", e);
+                }
+            }
+            buildErrorData(threadPark, serverResponse);
+            return;
+        }
+        blockerServerResponse.setErrorMsg(serverResponse.getErrorMsg());
     }
 
     protected abstract void buildReturnData(ThreadPark threadPark, ServerResponse serverResponse);

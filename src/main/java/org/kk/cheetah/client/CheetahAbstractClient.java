@@ -13,27 +13,32 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
-public class CheetahAbstractClient implements CheetahClient {
+public abstract class CheetahAbstractClient implements CheetahClient {
     private final Logger logger = LoggerFactory.getLogger(CheetahAbstractClient.class);
     protected NettyAbstractClientHandler nettyClientHandler;
     protected ThreadParkCoordinator threadParkCoordinator;
-    private String clientId;
+    protected String clientId;
+    protected String cluster;
+    protected String topic;
 
     public String getClientId() {
         return clientId;
     }
 
-    public CheetahAbstractClient(String clientId) {
-        this.clientId = clientId;
+    public String getTopic() {
+        return topic;
     }
 
     public void start() {
-        String host = "127.0.0.1";
-        int port = 9997;
+        String[] hostAndPort = cluster.split(":");
         if (logger.isDebugEnabled()) {
-            logger.debug("start param , host:{},port:{}", host, port);
+            logger.debug("start param , host:{},port:{}", hostAndPort[0], hostAndPort[1]);
         }
-        connect(host, port);
+        connect(hostAndPort[0], Integer.valueOf(hostAndPort[1]));
+    }
+
+    public void shutdown() {
+        nettyClientHandler.shutdown();
     }
 
     private void connect(String host, int port) {
@@ -60,7 +65,9 @@ public class CheetahAbstractClient implements CheetahClient {
                     });
             bootstrap.connect(host, port).sync();
         } catch (Exception e) {
-            workerGroup.shutdownGracefully();
+            if (workerGroup != null) {
+                workerGroup.shutdownGracefully();
+            }
         }
     }
 

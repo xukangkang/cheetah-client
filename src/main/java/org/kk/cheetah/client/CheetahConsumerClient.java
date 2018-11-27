@@ -29,28 +29,23 @@ public class CheetahConsumerClient extends CheetahAbstractClient {
     private int coreThreadNum = 5;
     private long threadFreeTime = 10l;
 
-    public CheetahConsumerClient(String clientId) {
-        super(clientId);
+    private CheetahConsumerClient() {
         threadParkCoordinator = new ConsumerThreadParkCoordinator();
         nettyClientHandler = new NettyConsumerClientHandler(new ConsumerHandlerSelector(threadParkCoordinator));
         executor = new ThreadPoolExecutor(coreThreadNum, coreThreadNum, threadFreeTime,
                 TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
     }
 
-    public CheetahConsumerClient(String clientId, String group) {
-        this(clientId);
-        this.group = group;
-    }
-
     public Future<ConsumerRecords> poll() {
         final ConsumerRecordRequest consumerRecordRequest = new ConsumerRecordRequest();
-        consumerRecordRequest.setClientId(getClientId());
+        consumerRecordRequest.setClientId(clientId);
         consumerRecordRequest.setGroup(group);
         consumerRecordRequest.setMaxPollNum(maxPollNum);
+        consumerRecordRequest.setTopic(topic);
         consumerRecordRequest.setPollTag(getClientId() + pollTag.getAndIncrement());
-        if(logger.isDebugEnabled()){
-    		logger.debug("poll ->发送第 {} 条消息",pollTag.get());
-    	}
+        if (logger.isDebugEnabled()) {
+            logger.debug("poll ->发送第 {} 条消息", pollTag.get());
+        }
         return executor.submit(new Callable<ConsumerRecords>() {
             public ConsumerRecords call() throws Exception {
                 ((NettyConsumerClientHandler) nettyClientHandler).poll(consumerRecordRequest);
@@ -63,7 +58,6 @@ public class CheetahConsumerClient extends CheetahAbstractClient {
                 LockSupport.park(consumerRecords);
                 return consumerRecords;
             }
-
         });
 
     }
@@ -72,4 +66,75 @@ public class CheetahConsumerClient extends CheetahAbstractClient {
         return group;
     }
 
+    public static CheetahConsumerClientBuilder cheetahConsumerClientBuilder() {
+        return new CheetahConsumerClientBuilder();
+    }
+
+    public static class CheetahConsumerClientBuilder {
+        private String clientId;
+        private String group;
+        private int maxPollNum;
+        private int maxThreadNum;
+        private int coreThreadNum;
+        private long threadFreeTime;
+        private String cluster;
+        private String topic;
+        private ExecutorService executor;
+
+        public CheetahConsumerClientBuilder() {
+        }
+
+        public CheetahConsumerClientBuilder cluster(String cluster) {
+            this.cluster = cluster;
+            return this;
+        }
+
+        public CheetahConsumerClientBuilder topic(String topic) {
+            this.topic = topic;
+            return this;
+        }
+
+        public CheetahConsumerClientBuilder clientId(String clientId) {
+            this.clientId = clientId;
+            return this;
+        }
+
+        public CheetahConsumerClientBuilder maxPollNum(int maxPollNum) {
+            this.maxPollNum = maxPollNum;
+            return this;
+        }
+
+        public CheetahConsumerClientBuilder coreThreadNum(int coreThreadNum) {
+            this.coreThreadNum = coreThreadNum;
+            return this;
+        }
+
+        public CheetahConsumerClientBuilder maxThreadNum(int maxThreadNum) {
+            this.maxThreadNum = maxThreadNum;
+            return this;
+        }
+
+        public CheetahConsumerClientBuilder group(String group) {
+            this.group = group;
+            return this;
+        }
+
+        public CheetahConsumerClientBuilder threadFreeTime(long threadFreeTime) {
+            this.threadFreeTime = threadFreeTime;
+            return this;
+        }
+
+        public CheetahConsumerClient buildCheetahConsumerClient() {
+            CheetahConsumerClient cheetahConsumerClient = new CheetahConsumerClient();
+            cheetahConsumerClient.clientId = this.clientId;
+            cheetahConsumerClient.group = this.group;
+            cheetahConsumerClient.maxPollNum = this.maxPollNum;
+            cheetahConsumerClient.cluster = this.cluster;
+            cheetahConsumerClient.topic = this.topic;
+            executor = new ThreadPoolExecutor(coreThreadNum, maxThreadNum, threadFreeTime,
+                    TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+            cheetahConsumerClient.executor = this.executor;
+            return cheetahConsumerClient;
+        }
+    }
 }

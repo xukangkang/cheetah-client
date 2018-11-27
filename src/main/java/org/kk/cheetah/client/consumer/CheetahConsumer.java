@@ -13,16 +13,32 @@ import org.slf4j.LoggerFactory;
 public class CheetahConsumer<K, V> implements Consumer<K, V> {
     private final Logger logger = LoggerFactory.getLogger(CheetahProducer.class);
     private CheetahConsumerClient cheetahConsumerClient;
-    private String clientId;
-    private String group;
 
     public CheetahConsumer(Properties properties) {
-        clientId = (String) properties.get("clientId");
-        group = (String) properties.get("group");
-        if (clientId == null || group == null) {
-            throw new NullPointerException("clientId和group不能为空");
+        String clientId = "p1";
+        /* String clientId = (String) properties.get("clientId");
+        if (clientId == null) {
+            throw new NullPointerException("clientId不能为空");
+        }*/
+        String group = (String) properties.get("group");
+        if (group == null) {
+            throw new NullPointerException("group不能为空");
         }
-        cheetahConsumerClient = new CheetahConsumerClient(clientId, group);
+        String topic = properties.getProperty("topic");
+        if (topic == null) {
+            throw new NullPointerException("topic 不能为 null");
+        }
+        cheetahConsumerClient = CheetahConsumerClient
+                .cheetahConsumerClientBuilder()
+                .cluster("127.0.0.1:9997")
+                .clientId(clientId)
+                .group(group)
+                .coreThreadNum(5)
+                .maxThreadNum(5)
+                .maxPollNum(5)
+                .topic(topic)
+                .threadFreeTime(10l)
+                .buildCheetahConsumerClient();
         cheetahConsumerClient.start();
     }
 
@@ -31,28 +47,17 @@ public class CheetahConsumer<K, V> implements Consumer<K, V> {
         ConsumerRecords consumerRecords = null;
         try {
             consumerRecords = consumerRecordsFuture.get();
+            if (consumerRecords.getErrorMsg() != null) {
+                cheetahConsumerClient.shutdown();
+                //TODO自定义异常
+                throw new RuntimeException(consumerRecords.getErrorMsg());
+            }
         } catch (InterruptedException e) {
             logger.error("poll", e);
         } catch (ExecutionException e) {
             logger.error("poll", e);
         }
         return consumerRecords;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public String getGroup() {
-        return group;
-    }
-
-    public void setGroup(String group) {
-        this.group = group;
     }
 
 }

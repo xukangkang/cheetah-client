@@ -22,22 +22,17 @@ public class CheetahProducerClient extends CheetahAbstractClient {
 
     private final Logger logger = LoggerFactory.getLogger(CheetahProducerClient.class);
     private ExecutorService executor;
-    private int coreThreadNum = 5;
-    private long threadFreeTime = 10l;
     private AtomicLong messageId = new AtomicLong();
 
-    public CheetahProducerClient(String clientId) {
-        super(clientId);
+    private CheetahProducerClient() {
         threadParkCoordinator = new ProducerThreadParkCoordinator();
-        nettyClientHandler = new NettyProducerClientHandler(
-                new ProducerHandlerSelector(threadParkCoordinator));
-        executor = new ThreadPoolExecutor(coreThreadNum, coreThreadNum, threadFreeTime,
-                TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+        nettyClientHandler = new NettyProducerClientHandler(new ProducerHandlerSelector(threadParkCoordinator));
     }
 
     public Future<ProducerRecord> send(final ProducerRecordRequest producerRecordRequest) {
-        producerRecordRequest.setClientId(getClientId());
+        producerRecordRequest.setClientId(clientId);
         producerRecordRequest.setDataId(getClientId() + messageId.getAndIncrement());
+        producerRecordRequest.setTopic(topic);
         return executor.submit(new Callable<ProducerRecord>() {
 
             public ProducerRecord call() throws Exception {
@@ -55,4 +50,69 @@ public class CheetahProducerClient extends CheetahAbstractClient {
         });
     }
 
+    public static CheetahProducerClientBuilder cheetahProducerClientBuilder() {
+        return new CheetahProducerClientBuilder();
+    }
+
+    public static class CheetahProducerClientBuilder {
+        private String clientId;
+        private int maxThreadNum;
+        private int coreThreadNum;
+        private long threadFreeTime;
+        private String topic;
+        private String cluster;
+        private ExecutorService executor;
+
+        public CheetahProducerClientBuilder() {
+        }
+
+        public CheetahProducerClientBuilder cluster(String cluster) {
+            this.cluster = cluster;
+            return this;
+        }
+
+        public CheetahProducerClientBuilder clientId(String clientId) {
+            this.clientId = clientId;
+            return this;
+        }
+
+        public CheetahProducerClientBuilder coreThreadNum(int coreThreadNum) {
+            this.coreThreadNum = coreThreadNum;
+            return this;
+        }
+
+        public CheetahProducerClientBuilder threadFreeTime(long threadFreeTime) {
+            this.threadFreeTime = threadFreeTime;
+            return this;
+        }
+
+        public CheetahProducerClientBuilder maxThreadNum(int maxThreadNum) {
+            this.maxThreadNum = maxThreadNum;
+            return this;
+        }
+
+        public CheetahProducerClientBuilder topic(String topic) {
+            this.topic = topic;
+            return this;
+        }
+
+        public CheetahProducerClient buildCheetahConsumerClient() {
+
+            CheetahProducerClient cheetahProducerClient = new CheetahProducerClient();
+            cheetahProducerClient.cluster = this.cluster;
+            cheetahProducerClient.clientId = this.clientId;
+            cheetahProducerClient.topic = this.topic;
+            executor = new ThreadPoolExecutor(coreThreadNum, maxThreadNum, threadFreeTime,
+                    TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+            cheetahProducerClient.executor = this.executor;
+
+            return cheetahProducerClient;
+        }
+    }
+
+    @Override
+    public void shutdown() {
+        // TODO Auto-generated method stub
+
+    }
 }

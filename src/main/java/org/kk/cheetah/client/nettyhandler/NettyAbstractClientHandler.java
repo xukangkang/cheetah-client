@@ -11,6 +11,8 @@ public abstract class NettyAbstractClientHandler extends ChannelHandlerAdapter {
 
     private HandlerSelector handlerSelector;
 
+    protected ChannelHandlerContext ctx;
+
     protected abstract void init(ChannelHandlerContext ctx);
 
     public NettyAbstractClientHandler(HandlerSelector handlerSelector) {
@@ -19,6 +21,7 @@ public abstract class NettyAbstractClientHandler extends ChannelHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        this.ctx = ctx;
         init(ctx);
     }
 
@@ -36,6 +39,10 @@ public abstract class NettyAbstractClientHandler extends ChannelHandlerAdapter {
             //TODO 返回给客户端不支持响应
             throw new RuntimeException("不支持响应");
         }
+    }
+
+    public void shutdown() {
+        ctx.close();
     }
 
 }

@@ -17,14 +17,27 @@ public class CheetahProducer<K, V> implements Producer<K, V> {
     private String clientId;
 
     public CheetahProducer(Properties properties) {
-        String clientId = (String) properties.get("clientId");
+        String clientId = "c1";
+        /*String clientId = properties.getProperty("clientId");
         if (clientId == null) {
-            throw new NullPointerException();
+            throw new NullPointerException("clientId 不能为 null");
+        }*/
+        String topic = properties.getProperty("topic");
+        if (topic == null) {
+            throw new NullPointerException("topic 不能为 null");
         }
-        cheetahClient = new CheetahProducerClient(clientId);
+        cheetahClient = CheetahProducerClient
+                .cheetahProducerClientBuilder()
+                .cluster("127.0.0.1:9997")
+                .clientId(clientId)
+                .coreThreadNum(5)
+                .maxThreadNum(5)
+                .threadFreeTime(10l)
+                .topic(topic)
+                .buildCheetahConsumerClient();
         cheetahClient.start();
         try {
-            //等待对方初始化操作
+            //等待服务器初始化
             TimeUnit.MICROSECONDS.sleep(100);
         } catch (InterruptedException e) {
             logger.error("new CheetahProducer", e);
@@ -33,7 +46,6 @@ public class CheetahProducer<K, V> implements Producer<K, V> {
     }
 
     public Future<ProducerRecord> send(ProducerRecordRequest<K, V> producerRecord) {
-
         return cheetahClient.send(producerRecord);
     }
 
