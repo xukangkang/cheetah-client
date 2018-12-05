@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractThreadParkCoordinator implements ThreadParkCoordinator {
     private final static Logger logger = LoggerFactory.getLogger(AbstractThreadParkCoordinator.class);
-    private final static List<ThreadPark> threadParkList = new CopyOnWriteArrayList<ThreadPark>();
+    private final List<ThreadPark> threadParkList = new CopyOnWriteArrayList<ThreadPark>();
 
     public void addProducerThreadParkList(ThreadPark roducerThreadPark) {
         threadParkList.add(roducerThreadPark);

@@ -30,12 +30,13 @@ public class CheetahProducer<K, V> implements Producer<K, V> {
         if (server == null) {
             throw new NullPointerException("server 不能为 null");
         }
+        int processors = Runtime.getRuntime().availableProcessors();
         cheetahClient = CheetahProducerClient
                 .cheetahProducerClientBuilder()
                 .cluster(server)
                 .clientId(clientId)
-                .coreThreadNum(5)
-                .maxThreadNum(5)
+                .coreThreadNum(processors)
+                .maxThreadNum(processors)
                 .threadFreeTime(10l)
                 .topic(topic)
                 .buildCheetahConsumerClient();

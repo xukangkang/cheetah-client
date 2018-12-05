@@ -39,7 +39,7 @@ public class CheetahConsumer<K, V> implements Consumer<K, V> {
                 .group(group)
                 .coreThreadNum(5)
                 .maxThreadNum(5)
-                .maxPollNum(5)
+                .maxPollNum(100000)
                 .topic(topic)
                 .threadFreeTime(10l)
                 .buildCheetahConsumerClient();

@@ -23,17 +23,15 @@ public class CheetahConsumerClient extends CheetahAbstractClient {
     private final Logger logger = LoggerFactory.getLogger(CheetahConsumerClient.class);
 
     private String group;
-    private int maxPollNum = 5;
+    private int maxPollNum;
     private AtomicLong pollTag = new AtomicLong();
     private ExecutorService executor;
-    private int coreThreadNum = 5;
-    private long threadFreeTime = 10l;
+    private int coreThreadNum;
+    private long threadFreeTime;
 
     private CheetahConsumerClient() {
         threadParkCoordinator = new ConsumerThreadParkCoordinator();
         nettyClientHandler = new NettyConsumerClientHandler(new ConsumerHandlerSelector(threadParkCoordinator));
-        executor = new ThreadPoolExecutor(coreThreadNum, coreThreadNum, threadFreeTime,
-                TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
     }
 
     public Future<ConsumerRecords> poll() {

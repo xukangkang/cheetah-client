@@ -1,5 +1,6 @@
 package org.kk.cheetah.client.assist;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 import org.kk.cheetah.common.model.response.ProducerRecord;
@@ -20,7 +21,24 @@ public class ProducerThreadParkCoordinator extends AbstractThreadParkCoordinator
 
     @Override
     protected void buildReturnData(ThreadPark threadPark, ServerResponse serverResponse) {
-        ProducerRecord producerRecord = (ProducerRecord) LockSupport.getBlocker(threadPark.getThread());
-        producerRecord.setDataId(threadPark.getOnlyTag());
+
+        ProducerRecord blockerProducerRecord = (ProducerRecord) LockSupport.getBlocker(threadPark.getThread());
+        if (blockerProducerRecord == null) {
+            //等待Thread park
+            try {
+                TimeUnit.MICROSECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("buildReturnData", e);
+                }
+            }
+            buildReturnData(threadPark, serverResponse);
+            return;
+        }
+        ProducerRecord producerRecord = (ProducerRecord) serverResponse;
+        if (logger.isDebugEnabled()) {
+            logger.debug("buildReturnData ->producerRecord:{}", producerRecord);
+        }
+        blockerProducerRecord.setDataId(threadPark.getOnlyTag());
     }
 }
